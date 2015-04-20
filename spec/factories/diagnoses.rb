@@ -3,6 +3,6 @@
 FactoryGirl.define do
   factory :diagnosis do
     code "A00"
-    description "Cholera"
+    description "Cholera and silly stuff"
   end
 end
