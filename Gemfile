@@ -17,8 +17,11 @@ gem 'nokogiri'
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
 
+# API gems
+gem 'active_model_serializers'
+
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 2.0'
+# gem 'jbuilder', '~> 2.0'
 
 # adds pagination to ActiveModels
 gem 'kaminari'
@@ -30,6 +33,7 @@ group :test do
   gem 'rspec-rails'
   gem 'factory_girl_rails'
   gem 'ffaker'
+  gem "shoulda-matchers"
 end
 
 # Use ActiveModel has_secure_password
