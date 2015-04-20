@@ -7,8 +7,7 @@ describe ApiConstraints do
   describe "matches?" do
 
     it "returns true when the version matches the 'Accept' header" do
-      request = double(host: 'api.icd10.dev',
-                       headers: {"Accept" => "application/vnd.icd10.v1"})
+      request = double(host: 'api.icd10.dev', headers: {"Accept" => "application/vnd.icd10.v1"})
       api_constraints_v1.matches?(request).should be_truthy
     end
 
