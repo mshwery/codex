@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150419192102) do
+ActiveRecord::Schema.define(version: 20150419214256) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -23,10 +23,30 @@ ActiveRecord::Schema.define(version: 20150419192102) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.tsvector "search_vector"
+    t.integer  "section_id"
   end
 
   add_index "diagnoses", ["code"], name: "index_diagnoses_on_code", unique: true, using: :btree
   add_index "diagnoses", ["diagnosis_id"], name: "index_diagnoses_on_diagnosis_id", using: :btree
   add_index "diagnoses", ["search_vector"], name: "diagnoses_search_idx", using: :gin
+  add_index "diagnoses", ["section_id"], name: "index_diagnoses_on_section_id", using: :btree
+
+  create_table "inclusions", force: true do |t|
+    t.string   "note"
+    t.integer  "diagnosis_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "inclusions", ["diagnosis_id"], name: "index_inclusions_on_diagnosis_id", using: :btree
+
+  create_table "sections", force: true do |t|
+    t.string   "title"
+    t.string   "code_range"
+    t.string   "first_code"
+    t.string   "last_code"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
 end

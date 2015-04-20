@@ -2,9 +2,9 @@ class SearchController < ApplicationController
 
   def search
     if params[:q].nil?
-      @codes = []
+      @diagnoses = []
     else
-      @codes = Code.search params[:q]
+      @diagnoses = Diagnosis.search(params[:q])
     end
   end
 
