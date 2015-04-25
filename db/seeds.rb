@@ -1,5 +1,13 @@
 require 'nokogiri'
 
+def file
+  File.read(Rails.root.join('public/2015/FY15_Tabular.xml'))  
+end
+
+def xml_doc
+  Nokogiri::XML(file)
+end
+
 def get_text_node(node)
   text = nil
 
@@ -10,7 +18,7 @@ def get_text_node(node)
   text
 end
 
-def create_diagnosis(node, parent_id=nil)
+def create_diagnosis(node, parent_id=nil, section_id=nil)
 
   if !node or node.name != 'diag'
     return
@@ -24,7 +32,8 @@ def create_diagnosis(node, parent_id=nil)
   diagnosis = Diagnosis.new({
     code: code,
     description: description,
-    diagnosis_id: parent_id
+    diagnosis_id: parent_id,
+    section_id: section_id
   })
 
   if diagnosis.save!
@@ -32,59 +41,67 @@ def create_diagnosis(node, parent_id=nil)
     child = node.at('diag')
     sibling = node.next_element
 
+    create_inclusions(node, diagnosis.id)
+
     # step into the child and recursively call this method
     create_diagnosis(child, diagnosis.id)
 
     # step over to the sibling and recursively call this method
-    create_diagnosis(sibling)
+    create_diagnosis(sibling, nil, section_id)
   else
     puts "* error creating code: #{code} #{description}"
   end
 
 end
 
-puts "********Seeding Data Start************"
+def create_inclusions(node, diagnosis_id)
 
-file = File.read(Rails.root.join('public/2015/FY15_Tabular.xml'))
-doc = Nokogiri::XML(file)
+end
+
+def create_exclusions(node, diagnosis_id)
+  
+end
+
+def create_section(params)
+  section = Section.new(params)
+
+  if section!
+end
+
+doc = xml_doc
 
 sections = doc.search('//section')
 
 ActiveRecord::Base.transaction do
+  puts "********Diagnosis Data Start************"
+  
   sections.each do |section|
-    puts "creating diagnoses for section: #{section.attr('id')}"
+
+    section_range = section.attr('id')
+    s = Section.create({ range: section_range })
+
+    puts "creating diagnoses for section: #{section_range}"
     puts "============="
 
     # look for the first diag and create it
-    create_diagnosis(section.at('diag'))
+    create_diagnosis(section.at('diag'), nil, s.id)
   end
+
+  puts "********Diagnosis Data End************"
 end
 
-# loop thru sections and grab each main diag section
-# diagnoses = sections.map{ |section| section.css('diag') }
+doc.search('//sectionRef').each do |section|
+  puts "********Section Data Start************"
 
-# # limit to take only 10 for testing this
-# flattened = diagnoses.flatten(1) # .take(10)
+  s = Section.find_by_range(section.attr('id'))
 
-# puts "Starting transaction for #{flattened.size} diagnoses"
+  if s
+    s.update({
+      first_code: section.attr('first'),
+      last_code: section.attr('last'),
+      title: section.text
+    })
+  end
 
-# loop thru main diag blocks for each subdiag (the actual code and desc)
-# ActiveRecord::Base.transaction do
-#   flattened.each do |d|
-#     code = d.at('name')
-#     description = d.at('desc')
-
-#     if name and description
-#       diagnosis = Diagnosis.create({
-#         code: code.text,
-#         description: description.text
-#       })
-
-#       if !diagnosis
-#         puts "* error creating code: #{code.text} #{description.text}"
-#       end
-#     end
-#   end
-# end
-
-puts "********Seeding Data End************"
+  puts "********Section Data End************"
+end
