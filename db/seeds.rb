@@ -1,17 +1,17 @@
 require 'nokogiri'
-require 'stopwords'
+#require 'stopwords'
 
-def stopwords
-  Terminology::STOPWORDS
-end
+# def stopwords
+#   Terminology::STOPWORDS
+# end
 
-def file
-  File.read(Rails.root.join('public/2015/FY15_Tabular.xml'))  
-end
+# def file
+#   File.read(Rails.root.join('public/2015/FY15_Tabular.xml')).to_s
+# end
 
-def xml_doc
-  Nokogiri::XML(file)
-end
+# def xml_doc
+#   Nokogiri::XML(file).to_s
+# end
 
 def get_text_node(node)
   text = nil
@@ -95,17 +95,27 @@ def create_exclusion_notes(exclusions, exclusion_type, diagnosis_id)
   end
 end
 
-doc = xml_doc
-
-sections = doc.search('//section')
+#doc = xml_doc
+file = File.read(Rails.root.join('public/2015/FY15_Tabular.xml'))
+doc = Nokogiri::XML(file)
 
 ActiveRecord::Base.transaction do
   puts "********Diagnosis Data Start************"
   
-  sections.each do |section|
+  doc.search('//section').each do |section|
 
     section_range = section.attr('id')
-    s = Section.create({ range: section_range })
+    section_codes = section_range.split('-')
+    first_code = section_codes[0]
+    last_code = section_codes[1] || first_code
+    section_title = get_text_node(section.at('> desc'))
+
+    s = Section.create({
+      code_range: section_range,
+      first_code: first_code,
+      last_code: last_code,
+      title: section_title
+    })
 
     puts "creating diagnoses for section: #{section_range}"
     puts "============="
@@ -115,22 +125,6 @@ ActiveRecord::Base.transaction do
   end
 
   puts "********Diagnosis Data End************"
-end
-
-doc.search('//sectionRef').each do |section|
-  puts "********Section Data Start************"
-
-  s = Section.find_by_range(section.attr('id'))
-
-  if s
-    s.update({
-      first_code: section.attr('first'),
-      last_code: section.attr('last'),
-      title: section.text
-    })
-  end
-
-  puts "********Section Data End************"
 end
 
 ## get medical terms

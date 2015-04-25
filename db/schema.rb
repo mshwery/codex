@@ -32,7 +32,7 @@ ActiveRecord::Schema.define(version: 20150425193747) do
   add_index "diagnoses", ["section_id"], name: "index_diagnoses_on_section_id", using: :btree
 
   create_table "exclusions", force: true do |t|
-    t.string   "note"
+    t.text     "note"
     t.integer  "diagnosis_id"
     t.integer  "exclusion_type"
     t.datetime "created_at"
@@ -42,7 +42,7 @@ ActiveRecord::Schema.define(version: 20150425193747) do
   add_index "exclusions", ["diagnosis_id"], name: "index_exclusions_on_diagnosis_id", using: :btree
 
   create_table "inclusions", force: true do |t|
-    t.string   "note"
+    t.text     "note"
     t.integer  "diagnosis_id"
     t.datetime "created_at"
     t.datetime "updated_at"
