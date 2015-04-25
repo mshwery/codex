@@ -1,4 +1,9 @@
 require 'nokogiri'
+require 'stopwords'
+
+def stopwords
+  Terminology::STOPWORDS
+end
 
 def file
   File.read(Rails.root.join('public/2015/FY15_Tabular.xml'))  
@@ -42,6 +47,7 @@ def create_diagnosis(node, parent_id=nil, section_id=nil)
     sibling = node.next_element
 
     create_inclusions(node, diagnosis.id)
+    create_exclusions(node, diagnosis.id)
 
     # step into the child and recursively call this method
     create_diagnosis(child, diagnosis.id)
@@ -55,17 +61,38 @@ def create_diagnosis(node, parent_id=nil, section_id=nil)
 end
 
 def create_inclusions(node, diagnosis_id)
+  # find the node's <inclusionTerm> or <includes>
+  includes = node.at('> inclusionTerm') || node.at('> includes')
 
+  if includes
+    includes.search('note').each do |params|
+      note = Inclusion.create({
+        note: params.text,
+        diagnosis_id: diagnosis_id
+      })
+    end
+  end
 end
 
 def create_exclusions(node, diagnosis_id)
-  
+  # find the node's <excludes1> or <excludes2>
+  excludes1 = node.at('> excludes1')
+  excludes2 = node.at('> excludes2')
+
+  create_exclusion_notes(excludes1, 1, diagnosis_id)
+  create_exclusion_notes(excludes2, 2, diagnosis_id)
 end
 
-def create_section(params)
-  section = Section.new(params)
-
-  if section!
+def create_exclusion_notes(exclusions, exclusion_type, diagnosis_id)
+  if exclusions
+    exclusions.search('note').each do |params|
+      exclusion = Exclusion.create({
+        note: params.text,
+        diagnosis_id: diagnosis_id,
+        exclusion_type: exclusion_type
+      })
+    end
+  end
 end
 
 doc = xml_doc
@@ -105,3 +132,7 @@ doc.search('//sectionRef').each do |section|
 
   puts "********Section Data End************"
 end
+
+## get medical terms
+#terms = doc.search
+
